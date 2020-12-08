@@ -632,27 +632,39 @@ setlocale(LC_ALL, 'pt_BR.utf-8')
 def makeGanttChart(bestSoFarAnt):
     #quit()  #to not use more than 30 API calls per hour or 50 per day
     df = []
+    colors = {}
     ordem_producao = teste.get_ordens_producao()
     for job in JOBSLIST: #I believe this could stay as JOBSLIST since we pass in only the node.num into the bestSoFarNODESLIST
         for node in job.Nodes:
-            if node.duration > 0:
-                print(node.num)
-                print(job.num)
-                s = (datetime.datetime(year=2020, month=11, day=30, hour= 7) + datetime.timedelta(hours=bestSoFarNODESLIST[node.num].startTime))
-                d = s + datetime.timedelta(hours=bestSoFarNODESLIST[node.num].duration)
-                #df.append(dict(Task=str(node.machine), Start=str(s), Finish=str(d), Resource=str(job.num)+str(ordem_producao[node.num])))
-                df.append(dict(Task=str(node.machine), Start=str(s), Finish=str(d), Resource=str(job.num), OP=str(ordem_producao[node.num])))
-                print(s)
-                print(d)
+            if node.duration> 0 and node.duration != 0:
+                print("\n")
+                print("node.num é: ",node.num)
+                print("job.num é: ",job.num)
+                print("\n")
+                s = str(datetime.datetime.strptime('2020-12-02 07:15:00', "%Y-%m-%d %H:%M:%S"))
+                d = datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours=bestSoFarNODESLIST[node.num].startTime)+ \
+                    datetime.timedelta(hours=bestSoFarNODESLIST[node.num].duration)
+                if s!= 0 and d != 0:
+                    df.append(dict(Task=str(node.machine), Start=str(s), Finish=str(d), Resource=str(job.num), OP=str(ordem_producao[node.num])))
+                    print("O tempo de início é: ",s)
+                    print("O tempo de término é: ",d)
+                    print("\n")
+        #random_color = np.random.randint(0,256,size=(3)).tolist()
+        #random_color = np.array(random_color)  
+        #print("random_color é: ", random_color)  
+        #colors.update({str(node.machine) : 'rgb'+str(random_color).replace('[','(').replace(']',')')})
+        #print(colors)
 
-
-    #fig = ff.create_gantt(df, index_col=str('OP'), title = "ADAVANCED PLANNING SCHEDLING - ODM ", showgrid_x =True)
-    fig = ff.create_gantt(df, task_names=True, group_tasks=True, title = "ADAVANCED PLANNING SCHEDLING - ODM ")
-    #fig['layout']['annotations'] = annots
+    
+    
+    fig = ff.create_gantt(df, title = "ADAVANCED PLANNING SCHEDLING - ODM ",group_tasks=True, showgrid_x =True)
+    
+    
     plot(fig)
     
-    print('Schedule completed.')
-
+    
+    
+   
 ############################## GANTT --- END
 
 ############################## Main() Method Below:
