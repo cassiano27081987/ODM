@@ -1,0 +1,3 @@
+Teste 4000-N20M16-1Melhor sequência: [11, 15, 9, 3, 5, 8, 13, 7, 2, 4, 10, 6, 14, 12, 0, 1]
+Menor Makespan: 248.0
+Tempo de execução do GA:315.87575389300036

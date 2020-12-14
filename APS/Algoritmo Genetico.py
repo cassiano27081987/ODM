@@ -12,8 +12,12 @@ import random
 import copy 
 import time
 import timeit
-from criar_no import param_seq
-from leitura_op import ler_dados
+from collections import defaultdict
+import datetime                         #for Gantt (time formatting) #duration is in days
+import plotly                           #for Gantt (full package)
+import plotly.figure_factory as ff      #for Gantt
+import matplotlib as plt
+import chart_studio.plotly as py  
 
 inicio = timeit.default_timer()
 
@@ -22,13 +26,11 @@ inicio = timeit.default_timer()
 
 pi = []# matriz que receberá os tempos de processamento
 
-
-
 #-------------------fim da declaração dos parametros---------------------------
 
 #-------------------leitura dos dados---------------------------------
 
-arquivo= open('/home/cassiano/Área de Trabalho/ODM/Otimização Python/APS/table_process.txt','r')
+arquivo = open('/home/cassiano/Área de Trabalho/Tópicos Avançados em Gerência da Produção/2020/Trabalho Final/Instâncias/N20M16-1.txt','r')
 
 linha = arquivo.readline()
 #print("A linha é: ",linha)
@@ -36,80 +38,18 @@ linha = arquivo.readline()
 while linha != "":
     elementos = linha.split()
     for n in range(len(elementos)):
-        elementos[n] = float(elementos[n])
+        elementos[n] = int(elementos[n])
         aux = elementos
     pi.append(aux)
     linha = arquivo.readline()
 
 arquivo.close()
 
-   
+jobs = len(pi) #número de máquina representada pelas colunas de pi
+maq = len(pi[0]) #número de máquina representada pelas colunas de pi
 
-print ("\n Os dados são: \n")
-print(pi)
+print(jobs,maq)
 
-
-
-jobs = len(pi) #número de tarefas representada pelas linhas de pi
-maq = len(pi[0]) #número de máquinas representada pelas colunas de pi
-
-#------------------- fim da leitura dos dados---------------------------------
-
-
-
-
-# teste = param_seq()
-# #print(teste.get_joblist())
-
-# #teste = param_seq()
-# #print(teste.get_nodelist())
-
-
-# ############################## INITIALIZATION --- START
-
-
-# pi2 = ler_dados(1) # lendo dados de processamento
-
-# datas = ler_dados(0) # lendo dados das datas das ops
-
-# grupo_maq = ler_dados(2) # lendo dados dos grupos de máquinas;
-
-# seq_process = ler_dados(3) # lendo dados dos tabela da seqûencia;
-
-
-# print("\n")
-# print("\n")
-# print("Os dados são:")
-# print(pi2)
-
-# print("\n")
-# print("\n")
-# print("As datas são:")
-# print(datas)
-
-# print("\n")
-# print("\n")
-# print("Os grupos de máquinas são:")
-# print(grupo_maq)
-
-# print("\n")
-# print("\n")
-# print("A sequência de processamento é: ")
-# print(seq_process.sort_values(by=['Ord Prod', 'Oper'])) #ordenando por job
-
-# ############################# Criação dos conjuntos #################################
-
-# conjuntos = param_seq()
-# numJobs = conjuntos.get_numJobs()
-
-# numMachines = conjuntos.get_numMachines()
-
-# numNodes =  conjuntos.get_numNodes()
-
-
-print("\n Os dados são: \n")
-print(pi)
-print("\n")
 
 
 
@@ -127,8 +67,8 @@ print("\n")
 #------------------- fim da conversão dos dados---------------------------------
 
 #-------------------declaração dos conjuntos---------------------------------
-M =  len(pi[0]) #número de jobs
-N =  len(pi) #número de maquinas
+M=  len(pi[0]) #número de jobs
+N=  len(pi) #número de maquinas
 
 #-------------------fim da declaração dos conjuntos---------------------------
 
@@ -155,12 +95,14 @@ print("A nova seq1 obtida é: ",seq2)
 
 #-----------------fim da geração de sequência aleatória-----------------
 
-
-
-
 aa = 0
+# if N>0 and N<10:
+#   aa = 1000
+# if N>=10 and N<20:
+#   aa = 2000
 
-while aa < 1001:
+
+while aa < 3000:
     aa = aa+1
     print("---Ciclo: ", aa)
     print("-----------------------------Crossover------------------------------")
@@ -216,30 +158,34 @@ while aa < 1001:
     print("\n")    
     
     #---------- Função que calcula o makespan---------------------------------
-    
+   
     def makespan(seq, pi):
-	    completionTimes = np.zeros((N,M))
-	    i = seq[0]
-	    completionTimes[i][0] = (pi[i][0])
-	    completionTimes[0][0] = (1*maq*pi[i][0]) #restrição 4
-	    for m in range(1,M):
-		    i = seq[0]
-		    completionTimes[i][m] = completionTimes[i][m-1] + (pi[i][m])
-		    completionTimes[0][m] >= completionTimes[0][m-1] + (1*maq*pi[i][m])#restrição 5
+        completionTimes = np.zeros((N,M))
+        i = seq[0]
+        completionTimes[i][0] = (pi[i][0])
+        completionTimes[0][0] = (N*pi[i][0]) #restrição 4
+        
+        for m in range(1,M):
+            i = seq[0]
+            completionTimes[i][m] = completionTimes[i][m-1] + (pi[i][m])
+            completionTimes[0][m] >= completionTimes[0][m-1] + (M*pi[i][m])#restrição 5
 	    
-	    for i in range(1, len(seq)):
-		    atual = seq[i]
-		    anterior = seq[i-1]
-		    completionTimes[atual][0] >= completionTimes[anterior][1] #restrição 6
-		    completionTimes[atual][0] >= completionTimes[anterior][0] + (1*jobs*pi[atual][0])#restrição 7
-		    
-		    for m in range(1, M-1):
-			    completionTimes[atual][m] >= completionTimes[anterior][m+1] #restrição 8
-		    
-		    for m in range(1, M):
-			    completionTimes[atual][m] >= completionTimes[atual][m-1] + (1*jobs*pi[atual][m]) #restrição 9
-			    completionTimes[atual][m] = max(completionTimes[atual][m-1],completionTimes[anterior][m])  + pi[atual][m]
-	    return np.max(completionTimes)
+        for i in range(1, len(seq)):
+            atual = seq[i]
+            anterior = seq[i-1]
+            completionTimes[atual][0] >= completionTimes[anterior][1] #restrição 6
+            completionTimes[atual][0] >= completionTimes[anterior][0] + (N*pi[atual][0])#restrição 7
+        
+            for m in range(1, M-1):
+                completionTimes[atual][m] >= completionTimes[anterior][m+1] #restrição 8
+            
+            for m in range(1, M):
+                completionTimes[atual][m] >= completionTimes[atual][m-1] + (M*pi[atual][m]) #restrição 9
+                completionTimes[atual][m] = max(completionTimes[atual][m-1],completionTimes[anterior][m])  + pi[atual][m]
+        global aux_completionTimes 
+        aux_completionTimes = completionTimes
+        return np.max(completionTimes)
+
     #---------- fim Função que calcula o makespan---------------------------------
     
     #--------------------Gerando as mutações de seq3---------------------------
@@ -369,25 +315,159 @@ diferenca_tempo =  fim - inicio
 print(diferenca_tempo)
 print()
 
-print("\n")
+
+###################################################
+#Calculando os parâmetros do Gantt
+
+#aux1 = martriz das sequencias do jobs ótima
+#incio_job = tempos de inicio dos jobs nas maquinas
+
+
+
+seq_otima = []
+
+for i in aux1:
+    seq_otima.append(pi[i])
+
+
+
 print("\n")
 
-print("", end="\t")
-for i in range(aux3):
-    print (i+1, end="\t")
-print()
-for i in range(jobs):
-    print(i+1, end="\t")
-    for j in range(jobs):
-        print(completionTimes[i][j], end="\t")
-    print()
-print()
+print(aux1)
+print("\n")
 
- 
-'''
+print("Sequencia ótima")
+print(seq_otima)
+
+#Construção da matriz de início
+
+inicio = np.zeros((N,M))
+
+
+for i in range (N):
+  for j in range(M):
+    if i==0 and j==0:
+      inicio[0][0]=0
+    elif i>0 and j==0:
+      inicio[i][j] =inicio[i-1][j+1]   
+    elif i==N-1:
+      inicio[i][j] = inicio[i][j-1]+ seq_otima[i][j-1]
+    else:
+      if  j<M-1:
+        aux_comparacao = inicio[i][j-1] + seq_otima[i][j-1] 
+        if aux_comparacao < inicio[i-1][j+1]:
+          print(aux_comparacao)
+          print("<")
+          print(inicio[i-1][j+1])
+          inicio[i][j] = inicio[i-1][j+1]
+        else:  
+          inicio[i][j] =inicio[i][j-1]+ seq_otima[i][j-1] 
+      else:  
+        if i==0:
+          inicio[i][j] = inicio[i][j-1] + seq_otima[i][j-1]
+        else:
+          aux_comparacao = inicio[i][j-1] + seq_otima[i][j-1]
+          if aux_comparacao > inicio[i][j]:
+            inicio[i][j] = aux_comparacao
+          else:
+            inicio[i][j] =inicio[i][j-1]+ seq_otima[i][j-1]
+        # if aux_comparacao > inicio[i][j]:
+        #   print("Comparação última coluna")
+        #   print(aux_comparacao)
+        #   print(">")
+        #   print(inicio[i][j])
+        #   print(inicio[i][j-1])
+        #   print(seq[i][j-1])
+        #   inicio[i][j] =inicio[i][j-1]+ seq_otima[i][j-1]
+     
+       
+
+
+print("\n")
+
+
+print("Inicio das tarefas")   
+print(inicio)
+
+
+print("\n")
+
+termino = np.zeros((N,M))
+
+for i in range(N):
+  for j in range(M):
+    termino[i][j] = seq_otima[i][j] + inicio[i][j]
+
+print("Término")
+print(termino)
+
+
+print("\n")
+
+
+print("Inicio das tarefas")   
+print(inicio)
+   
+
+print("\n")
+print("Matrix das jobs")  
+#print(seq)
+
+print("\n")
+print(seq_otima)
+
+
+print("\n")
+
+print("\n")
+print("completionTimes")
+print(aux_completionTimes)
+
+#tempo_inicio = aux_completionTimes - seq_otima
+
+
+print("\n")
+
+
+import plotly.io as pio
+pio.renderers
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import plotly.graph_objs as go# for Gantt
+from plotly.offline import download_plotlyjs, init_notebook_mode,  plot #for Gantt
+
+#########################################################################
+#Impressao do Gantt
+
+df = []
+colors =[]
+for i in range(N):
+    for j in range(M):
+        s = str(datetime.datetime.strptime('2020-12-09 07:00:00', "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=inicio[i][j] ))
+        d = datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S")  + datetime.timedelta(minutes=seq_otima[i][j])
+        df.append(dict(Task=str("maq "+str(j)), Start=str(s), Finish=str(d), Resource=str("job "+str(i))))
+        print(f'Job {i} na Máquina {j}')
+        print("O tempo de início é: ",s)
+        print("O tempo de término é: ",d)
+        print("\n")
+        r = lambda: random.randint(0,255)
+        colors.append('#%02X%02X%02X' % (r(),r(),r()))
+
+
+
+fig = ff.create_gantt(df, colors = colors, index_col='Resource', title = "ADAVANCED PLANNING SCHEDLING - ODM ",show_colorbar=True, group_tasks=True,showgrid_x =True)
+    
+
+plot(fig)
+
+
+
+plt.show()
+
+
 # Criando e escrevendo em arquivos de texto (modo 'w').
-arquivo = open('/home/cassiano/Área de Trabalho/Tópicos Avançados em Gerência da Produção/2020/Trabalho Final/Resultados/Resultados Algoritmo Genético/N5M4-1(new1).txt','w')
-arquivo.write("Instância N5M4-1(new1).txt\n")
+arquivo = open('/home/cassiano/Área de Trabalho/ODM/Otimização Python/APS/genetico-3000-N20M16-1.txt','w')
+arquivo.write("Teste 3000-N20M16-1")
 arquivo.write("Melhor sequência: ")
 arquivo.write(str(aux1))
 arquivo.write("\n")
@@ -398,65 +478,3 @@ arquivo.write('Tempo de execução do GA:')
 arquivo.write(str(diferenca_tempo))
 arquivo.close() 
     
-
-
-
-from locale import setlocale, LC_ALL
-from calendar import mdays
-
-setlocale(LC_ALL, '')
-setlocale(LC_ALL, 'pt_BR.utf-8')
-
-
-
-############################## GANTT --- START
-def makeGanttChart(bestSoFarAnt):
-    #quit()  #to not use more than 30 API calls per hour or 50 per day
-    df = []
-    colors = {}
-    ordem_producao = teste.get_ordens_producao()
-    for job in JOBSLIST: #I believe this could stay as JOBSLIST since we pass in only the node.num into the bestSoFarNODESLIST
-        for node in job.Nodes:
-            if node.duration> 0 and node.duration != 0:
-                print("\n")
-                print("node.num é: ",node.num)
-                print("job.num é: ",job.num)
-                print("\n")
-                s = str(datetime.datetime.strptime('2020-12-02 07:15:00', "%Y-%m-%d %H:%M:%S"))
-                d = datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours=bestSoFarNODESLIST[node.num].startTime)+ \
-                    datetime.timedelta(hours=bestSoFarNODESLIST[node.num].duration)
-                if s!= 0 and d != 0:
-                    df.append(dict(Task=str(node.machine), Start=str(s), Finish=str(d), Resource=str(job.num), OP=str(ordem_producao[node.num])))
-                    print("O tempo de início é: ",s)
-                    print("O tempo de término é: ",d)
-                    print("\n")
-        #random_color = np.random.randint(0,256,size=(3)).tolist()
-        #random_color = np.array(random_color)  
-        #print("random_color é: ", random_color)  
-        #colors.update({str(node.machine) : 'rgb'+str(random_color).replace('[','(').replace(']',')')})
-        #print(colors)
-
-    
-    
-    fig = ff.create_gantt(df, title = "ADAVANCED PLANNING SCHEDLING - ODM ",group_tasks=True, showgrid_x =True)
-    
-    
-    plot(fig)
-
-
-
-
-# Criando e escrevendo em arquivos de texto (modo 'w').
-arquivo = open('/home/cassiano/Área de Trabalho/ODM/Otimização Python/APS/genetico-4000.txt','w')
-arquivo.write("Teste 4000")
-arquivo.write("Melhor sequência: ")
-arquivo.write(str(aux1))
-arquivo.write("\n")
-arquivo.write("Menor Makespan: ")
-arquivo.write(str(aux3))
-arquivo.write("\n")
-arquivo.write('Tempo de execução do GA:')
-arquivo.write(str(diferenca_tempo))
-arquivo.close() 
-    
-'''

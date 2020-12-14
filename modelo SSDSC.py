@@ -65,7 +65,7 @@ c= np.random.randint(500,2500,size=(T,S,P))
 
 print(c)
 print("\n")
-
+'''
 #Um truque para trabalhar com variáveis binárias
 
 alocacao = [
@@ -74,6 +74,8 @@ alocacao = [
         for i in range(n)
     ]
 ]
+'''
+
 #função que gera os números aleatórios segundo a distribuição uniforme (numpy.random.randint(low value,hight value,size=(M,N))
 
 d = random_matrix = np.random.randint(1000,5000,size=(T,P))
