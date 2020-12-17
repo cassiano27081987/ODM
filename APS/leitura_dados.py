@@ -61,7 +61,7 @@ def ler_dados(escolha):
     df_roteiro.pivot(columns = 'Grp Maq')
 
 
-    print(df_roteiro)
+    #print(df_roteiro)
     
 
     table_processamento = pd.pivot_table(df_completo, values =['Tmp Máq'], index=['Ord Prod'], columns = ['Grp Maq'],aggfunc=np.sum,fill_value=0)
@@ -80,7 +80,7 @@ def ler_dados(escolha):
 
     df_data_op.drop_duplicates()
 
-    #print(df_data_op)
+    print(df_data_op)
 
     
 

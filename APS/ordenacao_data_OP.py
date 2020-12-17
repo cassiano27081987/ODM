@@ -115,18 +115,24 @@ N = OP_ordenadas_data['Ord Prod'].unique()
 print("\n")
 print("Conjuntos de OPs a serem sequenciadas")
 print(N)
+print("\n")
 
 #Conjunto de máquinas disponíveis
-M= grupo_maq['Grp Maq'].unique()
-print("\n")
+M= pi.columns
 print("Conjunto de máquinas disponíveis")
 print(M)
 print("\n")
 
-#Conjunto de dias disponíveis no horizonte de programação
-print("Dias disponíveis para programação")
-print(len(days.networkdays()))
+#Conjunto auxliar para o cálculo do makespan
+aux_M = M[1:]
+print(aux_M)
 print("\n")
+
+
+#Conjunto de dias disponíveis no horizonte de programação
+#print("Dias disponíveis para programação")
+#print(len(days.networkdays()))
+#print("\n")
 
 
 
@@ -135,12 +141,12 @@ print("\n")
 #------------------- conversão dos dados---------------------------------
 
 
-print("\n")
-print("----------------Meta Heurística Algoritmo Genético-----------------")
-print("\n")
+#print("\n")
+#print("----------------Meta Heurística Algoritmo Genético-----------------")
+#print("\n")
 
-print("Os dados são: \n", pi)
-print("\n")
+#print("Os dados são: \n", pi)
+#print("\n")
 #------------------- fim da conversão dos dados---------------------------------
 
 
@@ -150,7 +156,7 @@ print("\n")
 
 #--------------------Gerando a sequência aleatória--------------------
 
-print("--------------Parâmetros de entrada---------------------------")
+#print("--------------Parâmetros de entrada---------------------------")
 print("\n")    
 
 seq1 = []
@@ -177,248 +183,245 @@ aa = 0
 #   aa = 2000
 
 
-while aa < 4000:
-    aa = aa+1
-    print("---Ciclo: ", aa)
-    print("-----------------------------Crossover------------------------------")
+while aa < 5:
+  aa = aa+1
+  print("---Ciclo: ", aa)
+  print("-----------------------------Crossover------------------------------")
+  print("\n")
+  
+  #patent chromosomes: 
+  
+  print("Pais") 
+  print('#'*80)
+  print("P1 :", seq1) 
+  print("\n")
+  print("P2 :", seq2, "\n") 
+  
+  seq3 = []
+  seq4 = []
+  
+  print("\n")
+  #---------- fim Declaração dos parametros de inicialização-------------------
+  
+  
+  #----------Função que realiza o cross-over---------------------------
+  
+  # realizando o crossover através da escolha de um ponto aleatório 
+  
+  # gerando um número aleatório  
+  k = random.sample(list(N),1)
+  print("Ponto de crossover :", k) 
+  
+  ponto_crossover = 0
+  
+  
+  for posicao in range(len(N)):
+      if N[posicao] == k:
+          ponto_crossover = posicao
+  
+  print('#'*80)
+  print("Posição do ponto de crossover",ponto_crossover)
+  
+  # Interação entre os genes;
+  for i in range(ponto_crossover, len(N)): 
+    aux1 = seq1[i]
+    seq3.append(aux1)
+    aux2 = seq2[i]
+    seq4.append(aux2)
+  
+    
+  #print("A seq3 antes do crossover é: ", seq3)
+  #print("\n")
+    
+  #print("A seq4 antes do crossover é: ", seq4)
+  #print("\n")
+    
+  #Gerando os novos filhos
+  for i in seq1:
+    if i not in seq3:
+      seq3.append(i)
+    if i not in seq4:
+      seq4.append(i)	    
+  
+  #print('#'*80)
+  #print("Filhos") 
+  #print("A seq3 após o crossover é: ", seq3)
+  #print("\n")
+    
+  #print("A seq4 após o crossover é: ", seq4)
+  
+  #print("\n")
+  
+  #print("------------------------Fim do Crossover-------------------------")
+  #print("\n")    
+  
+  #---------- Função que calcula o makespan---------------------------------
+  
+  # print('#'*80)
+  # print('#'*80)
+  # print(pi)
+  
+  def makespan(seq, pi):
+      
+      completionTimes = pd.DataFrame(np.zeros((pi.shape[0],pi.shape[1])),columns = pi.columns)
+      completionTimes.index = pi.index
+      i = seq[0]
+      #print(completionTimes.shape)
+      for m in M[1:]:
+        for aux in aux_M:
+            completionTimes.loc[i,m] = completionTimes.loc[i,aux] + pi.loc[i,m]
+          
+      for i in range(len(seq)):
+          atual = seq[i]
+          print("\n")
+          print("Atual é: ",  atual)
+          anterior = seq[i-1]
+          print("Anterior é: ",  anterior)
+          print("\n")
+          print("\n")
+          completionTimes.loc[atual,0] >= completionTimes.loc[anterior,1] #restrição 6
+          completionTimes.loc[atual,0] >= completionTimes.loc[anterior,0] + pi.loc[atual,0]#restrição 7
+      
+          for m in M:
+              completionTimes.loc[atual,m] >= completionTimes.loc[anterior,(m[0], m[1]+1)] #restrição 8
+          
+          for m in M:
+              completionTimes.loc[atual,m] >= completionTimes.iloc[atual,(m[0], m[1]-1)] + pi.loc[atual,m] #restrição 9
+              completionTimes.loc[atual,m] = max(completionTimesiloc[atual,(m[0], m[1]-1)],completionTimes.iloc[anterior,m])  + pi.loc[atual,m]
+      global aux_completionTimes 
+      aux_completionTimes = completionTimes
+      return completionTimes.max
+  
+  #---------- fim Função que calcula o makespan---------------------------------
+  
+  #--------------------Gerando as mutações de seq3---------------------------
+  
+  # print("------------------------Mutações--------------------------------")
+  # print("\n")     
+  
+  # print("------------------------Mutação da seq3 --------------------------")
+  # print("\n")     
+  
+  pos = len(seq3)-1 
+  
+  solucao = 'float'
+  
+  melhor_solucao = 100000000000000
+  melhor_seq3 = []
+  
+  while pos > 0:
+    seq3[pos], seq3[pos-1] = seq3[pos-1], seq3[pos]
+    print('Permutação %d ' %(pos), end="\t")
+    print(seq3)
+    solucao = makespan(seq3, pi)
+    print("O makespan da sequência é: ",solucao)
     print("\n")
+    if solucao < melhor_solucao:
+      melhor_solucao = copy.deepcopy(solucao)
+      melhor_seq3 = copy.deepcopy(seq3)
+      print("A solução atual é: ", melhor_solucao)
     
-    # patent chromosomes: 
-	
-    print("Pais") 
-    print('#'*80)
-    print("P1 :", seq1) 
+    pos -= 1
+  # print("A seq3 atual é: ", melhor_seq3)
+  # #--------------------Fim da geração as mutações de seq3-------------------  
+  
+  # print("------------------fim da Mutação da seq3 --------------------------")
+  # print("\n")     
+  
+  
+  
+  # #--------------------Gerando as mutações de seq4--------------------------
+  
+  # print("------------------------Mutação da seq4 --------------------------")
+  # print("\n") 
+  
+  
+  
+  pos = len(seq4)-1 
+  
+  solucao = 'float'
+  
+  melhor_solucao = 100000000000000
+  melhor_seq4 = []
+  
+  while pos > 0:
+    seq4[pos], seq4[pos-1] = seq4[pos-1], seq4[pos]
+    print('Permutação %d ' %(pos), end="\t")
+    print(seq4)
+    solucao = makespan(seq4, pi)
+    print("O makespan da sequência é: ",solucao)
     print("\n")
-    print("P2 :", seq2, "\n") 
+    if solucao < melhor_solucao:
+      melhor_solucao = copy.deepcopy(solucao)
+      melhor_seq4 = copy.deepcopy(seq4)
+      print("A solução atual é: ", melhor_solucao)
     
-    seq3 = []
-    seq4 = []
+    pos -= 1
+  # print("A seq4 atual é: ", melhor_seq4)    
+  
+  # #--------------------Fim da geração as mutações de seq4 -------------------    
+  
+  # print("------------------Fim da Mutação da seq4 --------------------------")
+  # print("\n")    
+  
+  # print("------------------------ Fim da Mutações---------------------------")
+  # print("\n")
+  
+  
+  solucao1 = []
+  
+  solucao1 = makespan(seq1,pi)
     
-    print("\n")
-    #---------- fim Declaração dos parametros de inicialização-------------------
-    
-    
-    #----------Função que realiza o cross-over---------------------------
-    
-    # realizando o crossover através da escolha de um ponto aleatório 
-    
-     # gerando um número aleatório  
-    k = random.sample(list(N),1)
-    print("Ponto de crossover :", k) 
-    
-    ponto_crossover = 0
-
-    
-    for posicao in range(len(N)):
-        if N[posicao] == k:
-            ponto_crossover = posicao
-
-    print('#'*80)
-    print("Posição do ponto de crossover",ponto_crossover)
-   
-    # Interação entre os genes;
-    for i in range(ponto_crossover, len(N)): 
-	    aux1 = seq1[i]
-	    seq3.append(aux1)
-	    aux2 = seq2[i]
-	    seq4.append(aux2)
-	
-     
-    print("A seq3 antes do crossover é: ", seq3)
-    print("\n")
-     
-    print("A seq4 antes do crossover é: ", seq4)
-    print("\n")
-     
-    #Gerando os novos filhos
-    for i in seq1:
-	    if i not in seq3:
-		    seq3.append(i)
-	    if i not in seq4:
-		    seq4.append(i)	    
-    
-    print('#'*80)
-    print("Filhos") 
-    print("A seq3 após o crossover é: ", seq3)
-    print("\n")
-     
-    print("A seq4 após o crossover é: ", seq4)
-	
-    print("\n")
-    
-    print("------------------------Fim do Crossover-------------------------")
-    print("\n")    
-    
-    #---------- Função que calcula o makespan---------------------------------
-   
-    # print('#'*80)
-    # print('#'*80)
-    # print(pi)
-
-    def makespan(seq, pi):
-        
-        completionTimes = pd.DataFrame(np.zeros((pi.shape[0],pi.shape[1])),columns = pi.columns)
-        completionTimes.index = pi.index
-        i = seq[0]
-        #print(completionTimes.shape)
-        for m in M[1:]:
-            print('#'*80)
-            print('#'*80)
-            print("O valor de m é: ",m)
-            print("\n")
-            print("O valor de m-1 é: ",m-1)
-            print('#'*80)
-            print('#'*80)
-            print("O valor de i é: ",i)
-            print(completionTimes.iloc[i,m-1] )
-            print(pi.iloc[i,m])
-            completionTimes[i][m] = completionTimes.iloc[i,m-1] + pi.iloc[i,m]
-	    
-        for i in seq:
-            atual = seq[i]
-            anterior = seq[i-1]
-            completionTimes[atual][0] >= completionTimes.iloc[anterior,1] #restrição 6
-            completionTimes[atual][0] >= completionTimes.iloc[anterior,0] + pi.iloc[atual,0]#restrição 7
-        
-            for m in M:
-                completionTimes[atual][m] >= completionTimes.iloc[anterior,m+1] #restrição 8
-            
-            for m in M:
-                completionTimes[atual][m] >= completionTimes.iloc[atual,m-1] + pi.iloc[atual,m] #restrição 9
-                completionTimes[atual][m] = max(completionTimesiloc[atual,m-1],completionTimes.iloc[anterior,m])  + pi.iloc[atual,m]
-        global aux_completionTimes 
-        aux_completionTimes = completionTimes
-        return completionTimes.max
-
-    #---------- fim Função que calcula o makespan---------------------------------
-    
-    #--------------------Gerando as mutações de seq3---------------------------
-    
-    print("------------------------Mutações--------------------------------")
-    print("\n")     
-   
-    print("------------------------Mutação da seq3 --------------------------")
-    print("\n")     
-    
-    pos = len(seq3)-1 
-    
-    solucao = 'float'
-    
-    melhor_solucao = 100000000000000
-    melhor_seq3 = []
-    
-    while pos > 0:
-	    seq3[pos], seq3[pos-1] = seq3[pos-1], seq3[pos]
-	    print('Permutação %d ' %(pos), end="\t")
-	    print(seq3)
-	    solucao = makespan(seq3, pi)
-	    print("O makespan da sequência é: ",solucao)
-	    print("\n")
-	    if solucao < melhor_solucao:
-		    melhor_solucao = copy.deepcopy(solucao)
-		    melhor_seq3 = copy.deepcopy(seq3)
-		    print("A solução atual é: ", melhor_solucao)
-			
-	    pos -= 1
-    print("A seq3 atual é: ", melhor_seq3)
-    #--------------------Fim da geração as mutações de seq3-------------------  
-    
-    print("------------------fim da Mutação da seq3 --------------------------")
-    print("\n")     
-    
-    
-    
-    #--------------------Gerando as mutações de seq4--------------------------
-    
-    print("------------------------Mutação da seq4 --------------------------")
-    print("\n") 
-
-
-
-    pos = len(seq4)-1 
-    
-    solucao = 'float'
-    
-    melhor_solucao = 100000000000000
-    melhor_seq4 = []
-    
-    while pos > 0:
-	    seq4[pos], seq4[pos-1] = seq4[pos-1], seq4[pos]
-	    print('Permutação %d ' %(pos), end="\t")
-	    print(seq4)
-	    solucao = makespan(seq4, pi)
-	    print("O makespan da sequência é: ",solucao)
-	    print("\n")
-	    if solucao < melhor_solucao:
-		    melhor_solucao = copy.deepcopy(solucao)
-		    melhor_seq4 = copy.deepcopy(seq4)
-		    print("A solução atual é: ", melhor_solucao)
-			
-	    pos -= 1
-    print("A seq4 atual é: ", melhor_seq4)    
-    
-    #--------------------Fim da geração as mutações de seq4 -------------------    
-    
-    print("------------------Fim da Mutação da seq4 --------------------------")
-    print("\n")    
-    
-    print("------------------------ Fim da Mutações---------------------------")
-    print("\n")
-    
-    
-    solucao1 = []
-    
-    solucao1 = makespan(seq1,pi)
-    
-    solucao2 = []
-    
-    solucao2 = makespan(seq2,pi)
-    
-    solucao3 = []
-    
-    solucao3=makespan(melhor_seq3,pi)
-    
-    solucao4 = []
-    
-    solucao4 =makespan(melhor_seq4,pi)
-    
-    #------------------ Início da fase de seleção---------------------------------#
-    
-    print("-----------------------------Seleção------------------------------\n")
-    
-    import pandas as pd
-    
-    selecao = pd.DataFrame({'Sequência': [seq1, seq2, melhor_seq3,melhor_seq4], 'Makespan': [solucao1, solucao2, solucao3, solucao4]})# criando a tabela com as sequências e seus respectivos makespans
-    
-    
-    # Ordena pelo maior valor de Makesopan e salva em um novo DataFrame
-    selecao_ordenado = selecao.sort_values(by='Makespan')
-    
-    print("As soluções ordenadas são: ")
-    print(selecao_ordenado)
-    print("\n")
-    
-    aux1 = selecao_ordenado.iloc[0,0] #pegando a primeira melhor sequência
-    seq1 = copy.deepcopy(aux1)#copiando os valores para a seq1
-    print("A melhor sequência deste ciclo foi: \n", seq1)
-    aux3 = selecao_ordenado.iloc[0,1] #pegando o makespan da melhor sequência
-    print("A menor Makespan deste ciclo foi: ", aux3)
-    
-    aux2 = selecao_ordenado.iloc[1,0] #pegando a primeira melhor sequência
-    seq2 = copy.deepcopy(aux2)#copiando os valores para a seq1
-    print("A segunda melhor sequência deste ciclo foi: \n", seq2)
-    aux4 = selecao_ordenado.iloc[1,1] #pegando o makespan da melhor sequência
-    print("O menor Makespan deste ciclo foi: ", aux4    )
-    print("\n")
-    
-
+  solucao2 = []
+  
+  solucao2 = makespan(seq2,pi)
+  
+  solucao3 = []
+  
+  solucao3=makespan(melhor_seq3,pi)
+  
+  solucao4 = []
+  
+  solucao4 =makespan(melhor_seq4,pi)
+  
+  #------------------ Início da fase de seleção---------------------------------#
+  
+  print("-----------------------------Seleção------------------------------\n")
+  
+  import pandas as pd
+  
+  selecao = pd.DataFrame({'Sequência': [seq1, seq2, melhor_seq3,melhor_seq4], 'Makespan': [solucao1, solucao2, solucao3, solucao4]})# criando a tabela com as sequências e seus respectivos makespans
+  
+  
+  # Ordena pelo maior valor de Makespan e salva em um novo DataFrame
+  selecao_ordenado = selecao.sort_values(by='Makespan')
+  
+  print("As soluções ordenadas são: ")
+  print(selecao_ordenado)
+  print("\n")
+  
+  aux1 = selecao_ordenado.iloc[0,0] #pegando a primeira melhor sequência
+  seq1 = copy.deepcopy(aux1)#copiando os valores para a seq1
+  print("A melhor sequência deste ciclo foi: \n", seq1)
+  aux3 = selecao_ordenado.iloc[0,1] #pegando o makespan da melhor sequência
+  print("A menor Makespan deste ciclo foi: ", aux3)
+  
+  aux2 = selecao_ordenado.iloc[1,0] #pegando a primeira melhor sequência
+  seq2 = copy.deepcopy(aux2)#copiando os valores para a seq1
+  print("A segunda melhor sequência deste ciclo foi: \n", seq2)
+  aux4 = selecao_ordenado.iloc[1,1] #pegando o makespan da melhor sequência
+  print("O menor Makespan deste ciclo foi: ", aux4    )
+  print("\n")
+  
+  #------------------ Fim da fase de seleção---------------------------------#
+  
+  
 fim = timeit.default_timer()
 diferenca_tempo = 0.00
 print('Tempo de execução do GA')
 diferenca_tempo =  fim - inicio
 print(diferenca_tempo)
 print()
-
 
 ###################################################
 #Calculando os parâmetros do Gantt
@@ -443,7 +446,8 @@ print("\n")
 print("Sequencia ótima")
 print(seq_otima)
 
-#Construção da matriz de início
+###############################################################
+# Construção da matriz de início
 
 inicio = np.zeros((N,M))
 
@@ -496,6 +500,10 @@ print(inicio)
 
 print("\n")
 
+###############################################################
+# Construção da matriz de término
+
+
 termino = np.zeros((N,M))
 
 for i in range(N):
@@ -526,8 +534,6 @@ print("\n")
 print("\n")
 print("completionTimes")
 print(aux_completionTimes)
-
-#tempo_inicio = aux_completionTimes - seq_otima
 
 
 print("\n")
